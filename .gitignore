@@ -1,0 +1,99 @@
+# Build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+*.mod.o
+
+# User-space build artifacts
+apollod
+apolloctl
+*.a
+*.so
+
+# Build directories
+build/
+dist/
+
+# Development tools
+tools/test_*
+tools/debug_*
+
+# Kernel build artifacts
+kernel/apollo.ko
+kernel/apollo.mod
+kernel/apollo.mod.c
+kernel/apollo.mod.o
+kernel/apollo.o
+kernel/.apollo*
+kernel/built-in.a
+
+# User-space build artifacts
+userspace/apollod
+userspace/apolloctl
+userspace/*.o
+
+# Tools build artifacts
+tools/*.o
+tools/test_*
+tools/debug_*
+
+# Configuration backups
+*.bak
+*.orig
+*.rej
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Package files
+*.tar.gz
+*.deb
+*.rpm
+*.pkg.tar.xz
+
+# Log files
+*.log
+dmesg.log
+journalctl.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Test results
+test_results/
+test_output/
+
+# Documentation build
+docs/html/
+docs/latex/
+docs/man/
+
+# Local configuration (don't commit personal settings)
+config/apollo.local.conf

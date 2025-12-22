@@ -1,0 +1,12 @@
+[Unit]
+Description=Apollo Twin Device Reload Service
+After=apollo.service
+BindsTo=apollo.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --user reload apollo.service
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

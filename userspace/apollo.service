@@ -1,0 +1,26 @@
+[Unit]
+Description=Apollo Twin Control Daemon
+After=sound.target
+Requires=apollo.ko
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/apollod
+Restart=always
+RestartSec=5
+User=root
+Group=audio
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/apollo.conf /var/run/apollod.pid
+
+# Audio device access
+SupplementaryGroups=audio
+
+[Install]
+WantedBy=multi-user.target
+

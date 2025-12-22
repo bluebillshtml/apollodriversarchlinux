@@ -1,0 +1,19 @@
+# udev rules for Apollo Twin Linux Driver
+# These rules ensure proper permissions and device setup
+
+# Apollo Twin PCI device (PCI ID may vary by model)
+SUBSYSTEM=="pci", ATTR{idVendor}=="13f4", ATTR{idProduct}=="*", GROUP="audio", MODE="0660"
+
+# Apollo Twin Thunderbolt device
+SUBSYSTEM=="thunderbolt", ATTR{device_name}=="*Apollo*", GROUP="audio", MODE="0660"
+
+# Apollo control device (if implemented)
+SUBSYSTEM=="misc", ATTR{name}=="apollo", GROUP="audio", MODE="0660"
+
+# Reload udev rules when device is connected
+ACTION=="add", SUBSYSTEM=="pci", ATTR{idVendor}=="13f4", RUN+="/usr/bin/udevadm trigger --subsystem-match=pci"
+ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{device_name}=="*Apollo*", RUN+="/usr/bin/udevadm trigger --subsystem-match=thunderbolt"
+
+# Notify systemd about device changes
+ACTION=="add|remove", SUBSYSTEM=="pci", ATTR{idVendor}=="13f4", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}="apollo-reload.service"
+ACTION=="add|remove", SUBSYSTEM=="thunderbolt", ATTR{device_name}=="*Apollo*", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}="apollo-reload.service"
