@@ -1,0 +1,119 @@
+#!/bin/bash
+# Apollo Device Activation Script
+# Attempts to activate Apollo Twin device for PCIe endpoint exposure
+
+set -e
+
+DEVICE_PATH="/sys/bus/thunderbolt/devices/0-1"
+
+echo "Apollo Twin Device Activation Tool"
+echo "==================================="
+echo
+
+# Check if device exists
+if [ ! -d "$DEVICE_PATH" ]; then
+    echo "ERROR: Apollo device not found at $DEVICE_PATH"
+    echo "Make sure the device is connected and authorized."
+    exit 1
+fi
+
+echo "Found Apollo device:"
+cat "$DEVICE_PATH/device_name"
+echo "Vendor: $(cat $DEVICE_PATH/vendor)"
+echo "Device: $(cat $DEVICE_PATH/device)"
+
+AUTHORIZED_STATUS=$(cat $DEVICE_PATH/authorized)
+echo "Authorized: $AUTHORIZED_STATUS"
+
+if [ "$AUTHORIZED_STATUS" -eq 0 ]; then
+    echo
+    echo "ERROR: Device is not authorized!"
+    echo "Please authorize it first: sudo boltctl authorize <domain>:<port>"
+    exit 1
+fi
+echo
+
+# Function to try setting an attribute
+try_set_attr() {
+    local attr="$1"
+    local value="$2"
+    local desc="$3"
+
+    if [ -w "$DEVICE_PATH/$attr" ]; then
+        echo "Setting $attr to $value ($desc)..."
+        echo "$value" > "$DEVICE_PATH/$attr" 2>/dev/null && echo "  ✓ Success" || echo "  ✗ Failed"
+    else
+        echo "Attribute $attr not writable or doesn't exist"
+    fi
+}
+
+# Function to check for PCI devices
+check_pci_devices() {
+    local vendor="$1"
+    local count=$(lspci -nn 2>/dev/null | grep "$vendor" | wc -l || echo "0")
+    echo $count
+}
+
+echo "Attempting device activation..."
+echo
+
+# Check if we have root access for attribute writes
+if [ "$EUID" -ne 0 ]; then
+    echo "WARNING: Not running as root. Some activation methods may fail."
+    echo "For full activation, run: sudo $0"
+    echo
+fi
+
+# Get initial PCI device count
+INITIAL_COUNT=$(check_pci_devices "1176")
+echo "Initial Apollo PCI devices: $INITIAL_COUNT"
+
+# Try various activation methods
+echo
+echo "Method 1: Enable boot/wakeup attributes"
+try_set_attr "boot" "1" "enable device boot"
+# The 'wakeup' attribute is a directory, not a writable file
+# try_set_attr "wakeup" "enabled" "enable wakeup"
+try_set_attr "power/control" "on" "set power control to on"
+
+echo
+echo "Method 2: Domain-level settings"
+DOMAIN_PATH="/sys/bus/thunderbolt/devices/domain0"
+if [ -d "$DOMAIN_PATH" ]; then
+    # This attribute might not be writable or always present
+    # try_set_attr "../domain0/iommu_dma_protection" "1" "enable IOMMU DMA protection"
+    true # No-op to avoid syntax error if commented out
+fi
+
+echo
+echo "Method 3: Wait and check for changes"
+echo "Waiting 3 seconds for device to respond..."
+sleep 3
+
+# Check for new PCI devices
+FINAL_COUNT=$(check_pci_devices "1176")
+echo "Final Apollo PCI devices: $FINAL_COUNT"
+
+if [ "$FINAL_COUNT" -gt "$INITIAL_COUNT" ]; then
+    echo
+    echo "SUCCESS: New PCI devices detected!"
+    echo "Apollo PCIe endpoints are now available."
+    echo
+    echo "New Apollo PCI devices:"
+    lspci -nn | grep "1176" || echo "None found"
+    echo
+    echo "You can now load the Apollo driver:"
+    echo "  sudo insmod kernel/apollo.ko"
+    exit 0
+else
+    echo
+    echo "FAILURE: No new PCI devices detected"
+    echo "The device may require different activation methods."
+    echo
+    echo "Troubleshooting suggestions:"
+    echo "1. Try unplugging and re-plugging the device"
+    echo "2. Check Thunderbolt firmware updates"
+    echo "3. Verify device compatibility"
+    echo "4. Try on a different Thunderbolt port"
+    exit 1
+fi

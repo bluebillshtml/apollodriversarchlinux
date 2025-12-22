@@ -45,7 +45,9 @@
 #define APOLLO_RATE_192000	192000
 
 struct apollo_device {
+	/* PCI device */
 	struct pci_dev *pci;
+
 	struct snd_card *card;
 	struct snd_pcm *pcm;
 
@@ -73,6 +75,9 @@ struct apollo_device {
 
 	/* Firmware info */
 	const struct firmware *fw;
+
+	/* Device activation state */
+	bool activated;
 };
 
 /* Function declarations */
@@ -99,6 +104,7 @@ int apollo_hw_init(struct apollo_device *apollo);
 void apollo_hw_suspend(struct apollo_device *apollo);
 int apollo_hw_resume(struct apollo_device *apollo);
 int apollo_hw_constraints(struct snd_pcm *pcm);
+
 
 /* Control interface */
 int apollo_control_init(struct apollo_device *apollo);

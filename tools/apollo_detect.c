@@ -192,6 +192,52 @@ static void check_thunderbolt_daemon(void) {
     printf("\n");
 }
 
+static int activate_apollo_device(void) {
+    FILE *fp;
+    char path[512];
+
+    /* Try to set boot attribute to 1 */
+    snprintf(path, sizeof(path), "/sys/bus/thunderbolt/devices/0-1/boot");
+    fp = fopen(path, "w");
+    if (fp) {
+        fprintf(fp, "1");
+        fclose(fp);
+        printf("  Set boot attribute to 1\n");
+    }
+
+    /* Try to set various control attributes */
+    const char *control_files[] = {
+        "/sys/bus/thunderbolt/devices/0-1/wakeup",
+        "/sys/bus/thunderbolt/devices/domain0/iommu_dma_protection",
+        NULL
+    };
+
+    for (int i = 0; control_files[i]; i++) {
+        fp = fopen(control_files[i], "w");
+        if (fp) {
+            fprintf(fp, "1");
+            fclose(fp);
+            printf("  Enabled %s\n", control_files[i]);
+        }
+    }
+
+    /* Wait a moment for changes to take effect */
+    sleep(1);
+
+    /* Check if PCI devices appeared */
+    FILE *lspci = popen("lspci -n | grep 1176", "r");
+    if (lspci) {
+        char buffer[256];
+        if (fgets(buffer, sizeof(buffer), lspci)) {
+            pclose(lspci);
+            return 1; /* Success - PCI device found */
+        }
+        pclose(lspci);
+    }
+
+    return 0; /* No PCI device found */
+}
+
 int main(int argc, char *argv[]) {
     int verbose = 0;
     int thunderbolt_only = 0;
@@ -245,8 +291,18 @@ int main(int argc, char *argv[]) {
         printf("3. Load the kernel module: sudo modprobe apollo\n");
         printf("4. Check kernel logs: dmesg | grep -i apollo\n");
     } else {
-        printf("Apollo device(s) detected successfully!\n");
-        printf("You can now use the device with ALSA/PipeWire applications.\n");
+    printf("Apollo device(s) detected successfully!\n");
+
+    /* Try to activate the device */
+    printf("Attempting device activation...\n");
+    if (activate_apollo_device()) {
+        printf("✓ Device activation successful!\n");
+        printf("Check for new PCI devices: lspci | grep 1176\n");
+    } else {
+        printf("✗ Device activation failed\n");
+    }
+
+    printf("You can now use the device with ALSA/PipeWire applications.\n");
     }
 
     return EXIT_SUCCESS;
