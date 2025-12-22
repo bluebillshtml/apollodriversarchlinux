@@ -158,9 +158,10 @@ static int apollo_probe(struct pci_dev *pci, const struct pci_device_id *id)
 	}
 
 	/* Register the card */
+	dev_info(&pci->dev, "Attempting to register ALSA card\n");
 	err = snd_card_register(card);
 	if (err) {
-		dev_err(&pci->dev, "Failed to register ALSA card\n");
+		dev_err(&pci->dev, "Failed to register ALSA card: %d\n", err);
 		goto free_card;
 	}
 

@@ -14,7 +14,7 @@
 #include <alsa/asoundlib.h>
 #include "apollo_control.h"
 
-#define APOLLO_MIXER_NAME "hw:Apollo"
+#define APOLLO_MIXER_NAME "hw:apollo"
 #define APOLLO_DEVICE_FILE "/dev/apollo0"  /* Placeholder */
 
 struct apollo_control {
