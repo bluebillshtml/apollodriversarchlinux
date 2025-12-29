@@ -127,7 +127,7 @@ static int apollo_probe(struct pci_dev *pci, const struct pci_device_id *id)
 	err = snd_card_new(&pci->dev, -1, DRIVER_NAME,
 			  THIS_MODULE, 0, &card);
 	if (err) {
-		dev_err(&pci->dev, "Failed to create ALSA card\n");
+		dev_err(&pci->dev, "Failed to create ALSA card (err: %d)\n", err);
 		goto free_dma;
 	}
 
@@ -139,7 +139,7 @@ static int apollo_probe(struct pci_dev *pci, const struct pci_device_id *id)
 	/* Create PCM device */
 	err = snd_pcm_new(card, "Apollo Twin PCM", 0, 1, 1, &apollo->pcm);
 	if (err) {
-		dev_err(&pci->dev, "Failed to create PCM device\n");
+		dev_err(&pci->dev, "Failed to create PCM device (err: %d)\n", err);
 		goto free_card;
 	}
 
@@ -158,10 +158,9 @@ static int apollo_probe(struct pci_dev *pci, const struct pci_device_id *id)
 	}
 
 	/* Register the card */
-	dev_info(&pci->dev, "Attempting to register ALSA card\n");
 	err = snd_card_register(card);
 	if (err) {
-		dev_err(&pci->dev, "Failed to register ALSA card: %d\n", err);
+		dev_err(&pci->dev, "Failed to register ALSA card (err: %d)\n", err);
 		goto free_card;
 	}
 
